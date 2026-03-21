@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerotrade Global | Enterprise Web Filtering</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+:root{--primary:#0a192f;--secondary:#112240;--accent:#64ffda;--accent2:#0070f3;--text:#ccd6f6;--text2:#8892b0;--white:#e6f1ff;--danger:#ff4757;--success:#2ed573;--warning:#ffa502}
+body{background:var(--primary);color:var(--text);overflow-x:hidden}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--primary)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px}
+nav{position:fixed;top:0;width:100%;background:rgba(10,25,47,0.97);backdrop-filter:blur(10px);z-index:1000;padding:15px 50px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(100,255,218,0.1);box-shadow:0 4px 30px rgba(0,0,0,0.3)}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer}
+.logo-icon{width:45px;height:45px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--primary);box-shadow:0 0 20px rgba(100,255,218,0.3)}
+.logo-text{font-size:20px;font-weight:700;color:var(--white)}.logo-text span{color:var(--accent)}
+.nav-links{display:flex;gap:20px;list-style:none;align-items:center}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:13px;font-weight:500;transition:color 0.3s;cursor:pointer}
+.nav-links a:hover,.nav-links a.active{color:var(--accent)}
+.nav-btn{border:1px solid var(--accent)!important;color:var(--accent)!important;padding:7px 16px;border-radius:5px;background:transparent!important}
+.nav-btn:hover{background:rgba(100,255,218,0.1)!important}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer}
+.hamburger span{width:25px;height:2px;background:var(--accent);border-radius:2px;transition:all 0.3s}
+.mobile-menu{display:none;position:fixed;top:75px;left:0;width:100%;background:rgba(10,25,47,0.98);padding:20px;z-index:999;flex-direction:column;gap:5px;border-bottom:1px solid rgba(100,255,218,0.1)}
+.mobile-menu.open{display:flex}
+.mobile-menu a{color:var(--text2);text-decoration:none;font-size:14px;cursor:pointer;padding:12px 10px;border-bottom:1px solid rgba(255,255,255,0.05);transition:color 0.3s}
+.mobile-menu a:hover{color:var(--accent)}
+section{display:none;min-height:100vh;padding:100px 50px 60px;animation:fadeInUp 0.4s ease}
+section.active{display:block}
+#home{display:none;padding:0;position:relative;overflow:hidden}
+#home.active{display:flex;flex-direction:column}
+.hero{display:flex;justify-content:space-between;align-items:center;min-height:100vh;padding:120px 50px 60px;position:relative;gap:40px}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:700px;height:700px;background:radial-gradient(circle,rgba(100,255,218,0.04) 0%,transparent 70%);animation:pulse 4s ease-in-out infinite;pointer-events:none}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:1}}
+.hero-left{max-width:580px;flex:1}
+.hero-badge{background:rgba(100,255,218,0.1);border:1px solid rgba(100,255,218,0.3);color:var(--accent);padding:6px 16px;border-radius:20px;font-size:12px;margin-bottom:20px;display:inline-block}
+.hero h1{font-size:54px;font-weight:800;line-height:1.1;color:var(--white);margin-bottom:18px}
+.hero h1 span{color:var(--accent)}
+.hero-desc{font-size:16px;color:var(--text2);line-height:1.8;margin-bottom:32px}
+.hero-buttons{display:flex;gap:15px;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:var(--primary);padding:13px 28px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.3s;box-shadow:0 0 20px rgba(100,255,218,0.3)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 0 35px rgba(100,255,218,0.5)}
+.btn-secondary{background:transparent;color:var(--accent);padding:13px 28px;border:1px solid var(--accent);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.3s}
+.btn-secondary:hover{background:rgba(100,255,218,0.1);transform:translateY(-3px)}
+.stats{display:flex;gap:35px;margin-top:45px;flex-wrap:wrap}
+.stat-item{text-align:center}
+.stat-number{font-size:30px;font-weight:800;color:var(--accent)}
+.stat-label{font-size:11px;color:var(--text2);margin-top:4px}
+.dashboard-preview{background:var(--secondary);border:1px solid rgba(100,255,218,0.2);border-radius:16px;padding:20px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:float 4s ease-in-out infinite;flex-shrink:0}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dash-header h4{font-size:12px;color:var(--white)}
+.dash-live{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--success)}
+.live-dot{width:7px;height:7px;background:var(--success);border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.dash-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.dash-stat{background:rgba(10,25,47,0.6);border-radius:10px;padding:10px;text-align:center}
+.dash-stat-num{font-size:18px;font-weight:700;color:var(--accent)}
+.dash-stat-label{font-size:10px;color:var(--text2);margin-top:2px}
+.dash-bar-label{font-size:10px;color:var(--text2);margin-bottom:5px;display:flex;justify-content:space-between}
+.dash-bar{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;margin-bottom:9px;overflow:hidden}
+.dash-bar-fill{height:100%;border-radius:3px;animation:fillBar 2.5s ease forwards}
+@keyframes fillBar{from{width:0}}
+.threat-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px}
+.threat-item:last-child{border:none}
+.threat-name{color:var(--text2)}
+.threat-badge{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-blocked{background:rgba(255,71,87,0.2);color:var(--danger)}
+.badge-allowed{background:rgba(46,213,115,0.2);color:var(--success)}
+.badge-warning{background:rgba(255,165,2,0.2);color:var(--warning)}
+.ticker{background:rgba(100,255,218,0.03);border-top:1px solid rgba(100,255,218,0.08);border-bottom:1px solid rgba(100,255,218,0.08);padding:10px 0;overflow:hidden}
+.ticker-track{display:flex;gap:60px;animation:ticker 30s linear infinite;white-space:nowrap}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{font-size:12px;color:var(--text2);display:inline-flex;align-items:center;gap:8px}
+.ticker-item span{color:var(--accent)}
+.section-header{text-align:center;margin-bottom:50px}
+.section-badge{background:rgba(100,255,218,0.1);border:1px solid rgba(100,255,218,0.3);color:var(--accent);padding:5px 15px;border-radius:20px;font-size:12px;display:inline-block;margin-bottom:13px}
+.section-header h2{font-size:36px;font-weight:800;color:var(--white);margin-bottom:13px}
+.section-header p{font-size:14px;color:var(--text2);max-width:560px;margin:0 auto;line-height:1.8}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+.card{background:var(--secondary);border:1px solid rgba(100,255,218,0.1);border-radius:16px;padding:26px;transition:all 0.3s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(0);transition:transform 0.3s}
+.card:hover::before{transform:scaleX(1)}
+.card:hover{transform:translateY(-5px);border-color:rgba(100,255,218,0.3);box-shadow:0 20px 40px rgba(0,0,0,0.3)}
+.card-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px}
+.card h3{font-size:17px;color:var(--white);margin-bottom:9px}
+.card p{font-size:13px;color:var(--text2);line-height:1.8}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;align-items:start}
+.pricing-card{background:var(--secondary);border:1px solid rgba(100,255,218,0.1);border-radius:16px;padding:35px 26px;text-align:center;transition:all 0.3s;position:relative}
+.pricing-card.featured{border-color:var(--accent);box-shadow:0 0 40px rgba(100,255,218,0.15);transform:scale(1.03)}
+.pricing-card.featured::before{content:'⭐ MOST POPULAR';position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--primary);padding:4px 16px;border-radius:20px;font-size:11px;font-weight:700}
+.pricing-card:hover{transform:translateY(-5px)}
+.pricing-card.featured:hover{transform:scale(1.03) translateY(-5px)}
+.plan-name{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:13px}
+.plan-price{font-size:44px;font-weight:800;color:var(--white);margin-bottom:4px}
+.plan-price span{font-size:14px;color:var(--text2)}
+.plan-period{font-size:12px;color:var(--text2);margin-bottom:20px}
+.plan-features{list-style:none;margin-bottom:20px;text-align:left}
+.plan-features li{padding:7px 0;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.05)}
+.plan-features li::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0}
+.comparison-table{width:100%;border-collapse:collapse;margin-top:30px;border-radius:12px;overflow:hidden}
+.comparison-table th{background:var(--secondary);padding:15px;text-align:center;font-size:13px;color:var(--white);border-bottom:2px solid rgba(100,255,218,0.2)}
+.comparison-table th:first-child{text-align:left;padding-left:20px}
+.comparison-table th.hl{background:rgba(100,255,218,0.1);color:var(--accent)}
+.comparison-table td{padding:12px 15px;text-align:center;font-size:12px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(17,34,64,0.5)}
+.comparison-table td:first-child{text-align:left;color:var(--white);padding-left:20px}
+.comparison-table td.hl{background:rgba(100,255,218,0.05);color:var(--accent);font-weight:600}
+.comparison-table tr:hover td{background:rgba(100,255,218,0.03)}
+.check{color:#2ed573}.cross{color:#ff4757}
+.vm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.vm-card{background:var(--secondary);border-radius:16px;padding:30px;border:1px solid rgba(100,255,218,0.1);transition:all 0.3s;overflow:hidden;position:relative}
+.vm-card:hover{transform:translateY(-5px);border-color:rgba(100,255,218,0.3)}
+.vm-number{font-size:56px;font-weight:900;color:rgba(100,255,218,0.06);line-height:1;margin-bottom:8px}
+.vm-card h3{font-size:20px;color:var(--accent);margin-bottom:10px}
+.vm-card p{font-size:13px;color:var(--text2);line-height:1.9}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.contact-info h3{font-size:22px;color:var(--white);margin-bottom:13px}
+.contact-info>p{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:20px}
+.contact-item{display:flex;align-items:center;gap:13px;margin-bottom:15px}
+.contact-icon{width:40px;height:40px;background:rgba(100,255,218,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.contact-item h4{font-size:13px;color:var(--white)}
+.contact-item p{font-size:12px;color:var(--text2);margin:0}
+.contact-form{background:var(--secondary);border-radius:16px;padding:30px;border:1px solid rgba(100,255,218,0.1)}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
+.form-group input,.form-group textarea,.form-group select{width:100%;background:rgba(10,25,47,0.8);border:1px solid rgba(100,255,218,0.15);border-radius:8px;padding:10px 13px;color:var(--white);font-size:13px;transition:border-color 0.3s;outline:none}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);box-shadow:0 0 10px rgba(100,255,218,0.1)}
+.form-group textarea{height:95px;resize:vertical}
+.form-group select option{background:var(--secondary)}
+.sso-container{display:flex;justify-content:center;align-items:center;min-height:80vh}
+.sso-card{background:var(--secondary);border:1px solid rgba(100,255,218,0.2);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.sso-logo{text-align:center;margin-bottom:20px}
+.sso-logo-icon{width:55px;height:55px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:var(--primary);margin:0 auto 10px;box-shadow:0 0 25px rgba(100,255,218,0.3)}
+.sso-logo h2{font-size:20px;color:var(--white)}
+.sso-logo p{font-size:12px;color:var(--text2);margin-top:4px}
+.sso-tabs{display:flex;background:rgba(10,25,47,0.5);border-radius:8px;padding:4px;margin-bottom:18px}
+.sso-tab{flex:1;padding:8px;text-align:center;font-size:13px;color:var(--text2);cursor:pointer;border-radius:6px;transition:all 0.3s}
+.sso-tab.active{background:var(--accent);color:var(--primary);font-weight:700}
+.sso-form{display:none}.sso-form.active{display:block}
+.sso-providers{display:flex;flex-direction:column;gap:9px;margin-bottom:15px}
+.sso-provider{display:flex;align-items:center;gap:10px;padding:10px 15px;background:rgba(10,25,47,0.5);border:1px solid rgba(100,255,218,0.1);border-radius:8px;cursor:pointer;transition:all 0.3s;color:var(--text);font-size:13px;width:100%;text-align:left}
+.sso-provider:hover{border-color:var(--accent);background:rgba(100,255,218,0.05)}
+.sso-divider{text-align:center;color:var(--text2);font-size:12px;margin:12px 0;position:relative}
+.sso-divider::before,.sso-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:rgba(255,255,255,0.1)}
+.sso-divider::before{left:0}.sso-divider::after{right:0}
+.testimonials-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.testimonial-card{background:var(--secondary);border-radius:16px;padding:24px;border:1px solid rgba(100,255,218,0.1);transition:all 0.3s}
+.testimonial-card:hover{transform:translateY(-5px);border-color:rgba(100,255,218,0.3)}
+.stars{color:var(--warning);font-size:14px;margin-bottom:10px}
+.testimonial-text{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:15px;font-style:italic}
+.testimonial-author{display:flex;align-items:center;gap:10px}
+.author-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary);font-size:13px;flex-shrink:0}
+.author-info h4{font-size:13px;color:var(--white)}
+.author-info p{font-size:11px;color:var(--text2)}
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.team-card{background:var(--secondary);border-radius:16px;padding:24px;text-align:center;border:1px solid rgba(100,255,218,0.1);transition:all 0.3s}
+.team-card:hover{transform:translateY(-5px);border-color:rgba(100,255,218,0.3)}
+.team-avatar{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--primary);margin:0 auto 12px;box-shadow:0 0 20px rgba(100,255,218,0.3)}
+.team-card h3{font-size:15px;color:var(--white);margin-bottom:4px}
+.team-card .role{font-size:12px;color:var(--accent);margin-bottom:7px}
+.team-card .bio{font-size:12px;color:var(--text2);line-height:1.7}
+.progress-item{margin-bottom:16px}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px}
+.progress-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width 1.5s ease}
+.notification{position:fixed;bottom:20px;right:20px;background:var(--secondary);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:9999;transform:translateX(300%);transition:transform 0.4s ease;max-width:270px}
+.notification.show{transform:translateX(0)}
+.notification h4{font-size:13px;color:var(--white)}
+.notification p{font-size:11px;color:var(--text2)}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9998;justify-content:center;align-items:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--secondary);border:1px solid rgba(100,255,218,0.2);border-radius:16px;padding:35px;max-width:460px;width:90%;position:relative;animation:fadeInUp 0.3s ease}
+.modal-close{position:absolute;top:13px;right:16px;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer}
+.modal-close:hover{color:var(--accent)}
+.modal h3{font-size:20px;color:var(--white);margin-bottom:8px}
+.modal>p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.7}
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:15px}
+.alert.success{background:rgba(46,213,115,0.1);border:1px solid rgba(46,213,115,0.3);color:var(--success)}
+.alert.error{background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:var(--danger)}
+.user-dashboard{background:var(--secondary);border-radius:16px;padding:30px;border:1px solid rgba(100,255,218,0.1);margin-top:20px}
+.user-dashboard h3{font-size:20px;color:var(--accent);margin-bottom:20px}
+.user-info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px}
+.user-info-card{background:rgba(10,25,47,0.5);border-radius:12px;padding:15px;border:1px solid rgba(100,255,218,0.1)}
+.user-info-card h4{font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase}
+.user-info-card p{font-size:14px;color:var(--white);font-weight:600}
+footer{background:var(--secondary);border-top:1px solid rgba(100,255,218,0.1);padding:40px 50px;margin-top:20px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px;margin-bottom:28px}
+.footer-brand p{font-size:12px;color:var(--text2);line-height:1.8;margin-top:10px;max-width:240px}
+.footer-col h4{font-size:12px;color:var(--white);margin-bottom:14px;text-transform:uppercase;letter-spacing:1px}
+.footer-col ul{list-style:none}
+.footer-col ul li{margin-bottom:8px}
+.footer-col ul li a{font-size:12px;color:var(--text2);text-decoration:none;transition:color 0.3s;cursor:pointer}
+.footer-col ul li a:hover{color:var(--accent)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.05);padding-top:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.footer-bottom p{font-size:12px;color:var(--text2)}
+.footer-bottom span{color:var(--accent)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:900px){.hero{flex-direction:column;padding:100px 30px 50px;text-align:center}.dashboard-preview{display:none}.hero-buttons{justify-content:center}.stats{justify-content:center}}
+@media(max-width:768px){nav{padding:12px 20px}.nav-links{display:none}.hamburger{display:flex}section{padding:85px 20px 40px}.contact-grid{grid-template-columns:1fr}.footer-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:34px}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}.pricing-card.featured{transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<div class="notification" id="notification">
+<div style="font-size:20px">🛡️</div>
+<div><h4>Threat Blocked!</h4><p>Malicious domain blocked in real-time</p></div>
+</div>
+
+<div class="modal-overlay" id="demoModal">
+<div class="modal">
+<button class="modal-close" onclick="closeModal()">✕</button>
+<h3>🚀 Request a Free Demo</h3>
+<p>See AeroShield in action. Live demo tailored to your organization.</p>
+<div id="demoAlert"></div>
+<div class="form-group"><label>Full Name *</label><input type="text" id="demoName" placeholder="John Smith"></div>
+<div class="form-group"><label>Organization *</label><input type="text" id="demoOrg" placeholder="School District / Company"></div>
+<div class="form-group"><label>Email *</label><input type="email" id="demoEmail" placeholder="john@org.com"></div>
+<div class="form-group"><label>Devices</label><select id="demoDevices"><option>1-50</option><option>51-200</option><option>201-500</option><option>500+</option></select></div>
+<button class="btn-primary" style="width:100%;margin-top:5px" onclick="submitDemo()">Request Demo →</button>
+</div>
+</div>
+
+<nav>
+<div class="logo" onclick="showSection('home')">
+<div class="logo-icon">AG</div>
+<div class="logo-text">Aerotrade<span>Global</span></div>
+</div>
+<ul class="nav-links">
+<li><a onclick="showSection('home')" id="nav-home" class="active">Home</a></li>
+<li><a onclick="showSection('services')" id="nav-services">Services</a></li>
+<li><a onclick="showSection('pricing')" id="nav-pricing">Pricing</a></li>
+<li><a onclick="showSection('about')" id="nav-about">About</a></li>
+<li><a onclick="showSection('vision')" id="nav-vision">Vision & Mission</a></li>
+<li><a onclick="showSection('contact')" id="nav-contact">Contact</a></li>
+<li><a onclick="showSection('portal')" id="nav-portal" class="nav-btn">Client Portal</a></li>
+</ul>
+<div class="hamburger" onclick="toggleMenu()">
+<span></span><span></span><span></span>
+</div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+<a onclick="showSection('home');toggleMenu()">🏠 Home</a>
+<a onclick="showSection('services');toggleMenu()">⚙️ Services</a>
+<a onclick="showSection('pricing');toggleMenu()">💰 Pricing</a>
+<a onclick="showSection('about');toggleMenu()">👥 About</a>
+<a onclick="showSection('vision');toggleMenu()">🎯 Vision & Mission</a>
+<a onclick="showSection('contact');toggleMenu()">📧 Contact</a>
+<a onclick="showSection('portal');toggleMenu()">🔐 Client Portal</a>
+</div>
+
+<!-- HOME -->
+<section id="home" class="active">
+<div class="hero">
+<div class="hero-left">
+<div class="hero-badge">🛡️ RFC 3986 Compliant · Enterprise Grade · Cloudflare Powered</div>
+<h1>Next-Gen <span>Web Filtering</span> For Every Organization</h1>
+<p class="hero-desc">AeroShield by Aerotrade Global delivers enterprise-grade web filtering powered by Cloudflare Gateway and WebTitan DNS. RFC compliant, works on ALL devices, 50% cheaper than Lightspeed.</p>
+<div class="hero-buttons">
+<button class="btn-primary" onclick="openModal()">🚀 Get Free Demo</button>
+<button class="btn-secondary" onclick="showSection('pricing')">View Pricing →</button>
+</div>
+<div class="stats">
+<div class="stat-item"><div class="stat-number" id="stat1">0</div><div class="stat-label">Threats Blocked Daily</div></div>
+<div class="stat-item"><div class="stat-number" id="stat2">0</div><div class="stat-label">Devices Protected</div></div>
+<div class="stat-item"><div class="stat-number" id="stat3">0%</div><div class="stat-label">Uptime Guarantee</div></div>
+<div class="stat-item"><div class="stat-number" id="stat4">0</div><div class="stat-label">Organizations Served</div></div>
+</div>
+</div>
+<div class="hero-right">
+<div class="dashboard-preview">
+<div class="dash-header">
+<h4>🛡️ AeroShield Live Dashboard</h4>
+<div class="dash-live"><div class="live-dot"></div>LIVE</div>
+</div>
+<div class="dash-stats">
+<div class="dash-stat"><div class="dash-stat-num" id="liveBlocked">2,847</div><div class="dash-stat-label">Blocked Today</div></div>
+<div class="dash-stat"><div class="dash-stat-num" id="liveDevices">342</div><div class="dash-stat-label">Active Devices</div></div>
+<div class="dash-stat"><div class="dash-stat-num">99.9%</div><div class="dash-stat-label">Uptime</div></div>
+<div class="dash-stat"><div class="dash-stat-num" id="liveThreats">18</div><div class="dash-stat-label">Threats/Hour</div></div>
+</div>
+<div class="dash-bar-label"><span>Malware</span><span>94%</span></div>
+<div class="dash-bar"><div class="dash-bar-fill" style="width:94%;background:linear-gradient(90deg,#ff4757,#ff6b81)"></div></div>
+<div class="dash-bar-label"><span>Adult Content</span><span>88%</span></div>
+<div class="dash-bar"><div class="dash-bar-fill" style="width:88%;background:linear-gradient(90deg,#ffa502,#ffcc02)"></div></div>
+<div class="dash-bar-label"><span>Social Media</span><span>76%</span></div>
+<div class="dash-bar"><div class="dash-bar-fill" style="width:76%;background:linear-gradient(90deg,#64ffda,#0070f3)"></div></div>
+<div style="margin-top:10px">
+<div class="threat-item"><span class="threat-name">facebook.com</span><span class="threat-badge badge-blocked">Blocked</span></div>
+<div class="threat-item"><span class="threat-name">malware-site.net</span><span class="threat-badge badge-blocked">Blocked</span></div>
+<div class="threat-item"><span class="threat-name">google.com</span><span class="threat-badge badge-allowed">Allowed</span></div>
+<div class="threat-item"><span class="threat-name">tiktok.com</span><span class="threat-badge badge-warning">Warning</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="ticker">
+<div class="ticker-track">
+<span class="ticker-item">🛡️ RFC 3986 <span>Compliant</span></span>
+<span class="ticker-item">☁️ Cloudflare <span>Powered</span></span>
+<span class="ticker-item">🌐 WebTitan <span>DNS</span></span>
+<span class="ticker-item">💰 50% Cheaper Than <span>Lightspeed</span></span>
+<span class="ticker-item">📱 Works On <span>All Devices</span></span>
+<span class="ticker-item">🔒 Enterprise <span>Grade Security</span></span>
+<span class="ticker-item">⚡ Zero Latency <span>Filtering</span></span>
+<span class="ticker-item">📊 Real-Time <span>Dashboard</span></span>
+<span class="ticker-item">🛡️ RFC 3986 <span>Compliant</span></span>
+<span class="ticker-item">☁️ Cloudflare <span>Powered</span></span>
+<span class="ticker-item">🌐 WebTitan <span>DNS</span></span>
+<span class="ticker-item">💰 50% Cheaper Than <span>Lightspeed</span></span>
+<span class="ticker-item">📱 Works On <span>All Devices</span></span>
+<span class="ticker-item">🔒 Enterprise <span>Grade Security</span></span>
+<span class="ticker-item">⚡ Zero Latency <span>Filtering</span></span>
+<span class="ticker-item">📊 Real-Time <span>Dashboard</span></span>
+</div>
+</div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+<div class="section-header">
+<div class="section-badge">⚙️ Our Services</div>
+<h2>Everything You Need To <span style="color:var(--accent)">Filter & Protect</span></h2>
+<p>Enterprise-grade web filtering solutions powered by Cloudflare Gateway and WebTitan DNS.</p>
+</div>
+<div class="cards-grid">
+<div class="card"><div class="card-icon" style="background:rgba(100,255,218,0.1)">🛡️</div><h3>AeroShield PAC Filtering</h3><p>RFC 3986 compliant PAC file solution that intercepts and filters all web traffic. Works on Windows, Mac, Linux, iOS, Android and ChromeOS.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(0,112,243,0.1)">☁️</div><h3>Cloudflare Gateway</h3><p>Enterprise DNS filtering powered by Cloudflare. Blocks malware, phishing, adult content and custom categories at DNS level before reaching devices.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(255,165,2,0.1)">🌐</div><h3>WebTitan DNS Security</h3><p>Advanced DNS-based web filtering with granular category controls, real-time threat intelligence and detailed reporting dashboards.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(46,213,115,0.1)">📊</div><h3>Read-Only Client Dashboard</h3><p>Clients get secure read-only access to filtering reports, blocked sites logs and usage statistics. No ability to change settings.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(255,71,87,0.1)">🔒</div><h3>SSL Inspection</h3><p>Deep packet inspection of encrypted HTTPS traffic. See and filter what is inside SSL connections without compromising security.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(100,255,218,0.1)">📱</div><h3>All Device Support</h3><p>One solution for every device. Chromebooks, Windows PCs, Macs, iPhones, Android phones, tablets all protected simultaneously.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(0,112,243,0.1)">🏫</div><h3>School District Solutions</h3><p>CIPA compliant filtering for K-12 schools. Student safety, teacher controls, admin reporting and 50% cheaper than Lightspeed Rocket.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(255,165,2,0.1)">🏢</div><h3>Business Web Filtering</h3><p>Block social media, streaming and distracting sites during work hours. Protect employees from malware and phishing attacks automatically.</p></div>
+</div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+<div class="section-header">
+<div class="section-badge">💰 Pricing</div>
+<h2>50% Cheaper Than <span style="color:var(--accent)">Lightspeed</span></h2>
+<p>Enterprise-grade web filtering at a price that makes sense. No hidden fees, no long contracts.</p>
+</div>
+<div class="pricing-grid">
+<div class="pricing-card">
+<div class="plan-name">Starter</div>
+<div class="plan-price">$<span style="font-size:44px;color:var(--white)">2</span><span>/device</span></div>
+<div class="plan-period">per month · min 10 devices</div>
+<ul class="plan-features">
+<li>PAC File Filtering</li>
+<li>Cloudflare Gateway DNS</li>
+<li>Basic Category Blocking</li>
+<li>Read-Only Dashboard</li>
+<li>Email Support</li>
+<li>All Device Types</li>
+<li>Monthly Reports</li>
+</ul>
+<button class="btn-secondary" style="width:100%" onclick="openModal()">Get Started →</button>
+</div>
+<div class="pricing-card featured">
+<div class="plan-name">Professional</div>
+<div class="plan-price">$<span style="font-size:44px;color:var(--white)">3</span><span>/device</span></div>
+<div class="plan-period">per month · min 50 devices</div>
+<ul class="plan-features">
+<li>Everything in Starter</li>
+<li>WebTitan DNS Security</li>
+<li>SSL Inspection</li>
+<li>Advanced Category Controls</li>
+<li>Real-Time Threat Blocking</li>
+<li>Priority Support 24/7</li>
+<li>Weekly Reports</li>
+<li>Custom Block Pages</li>
+<li>CIPA Compliance</li>
+</ul>
+<button class="btn-primary" style="width:100%" onclick="openModal()">Get Started →</button>
+</div>
+<div class="pricing-card">
+<div class="plan-name">Enterprise</div>
+<div class="plan-price"><span style="font-size:30px;color:var(--white)">Custom</span></div>
+<div class="plan-period">contact us for pricing</div>
+<ul class="plan-features">
+<li>Everything in Professional</li>
+<li>Dedicated Account Manager</li>
+<li>Custom PAC File Rules</li>
+<li>API Access</li>
+<li>SLA Guarantee</li>
+<li>On-Site Setup</li>
+<li>Daily Reports</li>
+<li>Multi-Location Support</li>
+<li>White Label Option</li>
+</ul>
+<button class="btn-secondary" style="width:100%" onclick="showSection('contact')">Contact Us →</button>
+</div>
+</div>
+<div class="section-header" style="margin-top:60px;margin-bottom:20px">
+<div class="section-badge">📊 Comparison</div>
+<h2>AeroShield vs <span style="color:var(--accent)">Competitors</span></h2>
+</div>
+<table class="comparison-table">
+<thead>
+<tr>
+<th>Feature</th>
+<th class="hl">🛡️ AeroShield</th>
+<th>Lightspeed</th>
+<th>Cisco Umbrella</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Price per device/month</td><td class="hl">$2-3</td><td>$5-15</td><td>$8-20</td></tr>
+<tr><td>RFC 3986 PAC Compliance</td><td class="hl"><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+<tr><td>Cloudflare Gateway</td><td class="hl"><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+<tr><td>WebTitan DNS</td><td class="hl"><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+<tr><td>All Device Support</td><td class="hl"><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+<tr><td>SSL Inspection</td><td class="hl"><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+<tr><td>CIPA Compliant</td><td class="hl"><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+<tr><td>No Minimum Contract</td><td class="hl"><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+<tr><td>Setup Fee</td><td class="hl">$0</td><td>$500+</td><td>$1000+</td></tr>
+<tr><td>Savings vs Lightspeed</td><td class="hl" style="color:var(--success);font-weight:700">Save 50-80%</td><td>—</td><td>More expensive</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+<div class="section-header">
+<div class="section-badge">👥 About Us</div>
+<h2>About <span style="color:var(--accent)">Aerotrade Global</span></h2>
+<p>We are a technology company dedicated to making enterprise-grade web filtering accessible and affordable for every organization.</p>
+</div>
+<div class="cards-grid" style="margin-bottom:50px">
+<div class="card"><div class="card-icon" style="background:rgba(100,255,218,0.1)">🎯</div><h3>Our Story</h3><p>Founded by Frank Kidelo, Aerotrade Global was born from the need for affordable enterprise web filtering. We saw schools and businesses paying thousands for solutions we could deliver better at half the cost.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(0,112,243,0.1)">💡</div><h3>Our Technology</h3><p>We combine RFC 3986 compliant PAC files with Cloudflare Gateway and WebTitan DNS to create a multi-layer filtering solution that works on every device and operating system.</p></div>
+<div class="card"><div class="card-icon" style="background:rgba(46,213,115,0.1)">🌍</div><h3>Our Reach</h3><p>Serving organizations across the United States and globally. From small businesses to large school districts, our solution scales to meet any need at any size.</p></div>
+</div>
+<div class="section-header">
+<div class="section-badge">👨‍💼 Leadership</div>
+<h2>Meet The <span style="color:var(--accent)">Team</span></h2>
+</div>
+<div class="team-grid">
+<div class="team-card"><div class="team-avatar">FK</div><h3>Frank Kidelo</h3><div class="role">Founder & CEO</div><div class="bio">Network security expert and entrepreneur. Built AeroShield from the ground up with a vision to democratize enterprise web filtering.</div></div>
+<div class="team-card"><div class="team-avatar">🔒</div><h3>Security Team</h3><div class="role">Threat Intelligence</div><div class="bio">Dedicated security researchers monitoring emerging threats and updating filtering rules in real-time to keep clients protected.</div></div>
+<div class="team-card"><div class="team-avatar">⚙️</div><h3>Engineering</h3><div class="role">Platform Development</div><div class="bio">Expert engineers maintaining and improving the AeroShield platform, ensuring 99.9% uptime and zero-latency filtering.</div></div>
+<div class="team-card"><div class="team-avatar">📞</div><h3>Support Team</h3><div class="role">24/7 Client Support</div><div class="bio">Round-the-clock support team ready to help with setup, configuration and any technical issues your organization may face.</div></div>
+</div>
+<div class="section-header" style="margin-top:60px">
+<div class="section-badge">⭐ Testimonials</div>
+<h2>What Our <span style="color:var(--accent)">Clients Say</span></h2>
+</div>
+<div class="testimonials-grid">
+<div class="testimonial-card"><div class="stars">★★★★★</div><div class="testimonial-text">"AeroShield saved our school district over $60,000 per year compared to Lightspeed. The filtering is just as good if not better."</div><div class="testimonial-author"><div class="author-avatar">JM</div><div class="author-info"><h4>James Mitchell</h4><p>IT Director, Fairfax County Schools</p></div></div></div>
+<div class="testimonial-card"><div class="stars">★★★★★</div><div class="testimonial-text">"We switched from Cisco Umbrella to AeroShield and cut our costs by 70%. The RFC compliant PAC file works perfectly on all our Chromebooks."</div><div class="testimonial-author"><div class="author-avatar">SR</div><div class="author-info"><h4>Sarah Reynolds</h4><p>CTO, Arlington Public Schools</p></div></div></div>
+<div class="testimonial-card"><div class="stars">★★★★★</div><div class="testimonial-text">"Setup was incredibly easy. Within 24 hours we had all 500 devices filtered. The dashboard gives us exactly the reports we need."</div><div class="testimonial-author"><div class="author-avatar">DK</div><div class="author-info"><h4>David Kim</h4><p>Network Admin, Tech Solutions Inc</p></div></div></div>
+</div>
+</section>
+
+<!-- VISION -->
+<section id="vision">
+<div class="section-header">
+<div class="section-badge">🎯 Vision & Mission</div>
+<h2>What <span style="color:var(--accent)">Drives Us</span></h2>
+</div>
+<div class="vm-grid">
+<div class="vm-card"><div class="vm-number">01</div><h3>🔭 Our Vision</h3><p>To become the world's most trusted and affordable enterprise web filtering provider. Every school, business and organization deserves enterprise-grade internet security regardless of budget.</p></div>
+<div class="vm-card"><div class="vm-number">02</div><h3>🎯 Our Mission</h3><p>To deliver RFC compliant, enterprise-grade web filtering powered by Cloudflare and WebTitan at 50% less than competitors. Making powerful internet security accessible and affordable for all.</p></div>
+<div class="vm-card"><div class="vm-number">03</div><h3>💎 Our Values</h3><p>Integrity. Transparency. Innovation. Affordability without compromise. Security should not be a luxury — it should be a standard every organization can afford.</p></div>
+<div class="vm-card"><div class="vm-number">04</div><h3>🏆 Our Promise</h3><p>99.9% uptime, zero setup fees, no long-term contracts and 24/7 support. If AeroShield does not save your organization at least 40% we will work with you until it does.</p></div>
+<div class="vm-card"><div class="vm-number">05</div><h3>🌱 Our Growth</h3><p>Started as a single PAC file solution, AeroShield has grown into a full enterprise filtering platform. We continuously invest in new features and better threat intelligence.</p></div>
+<div class="vm-card"><div class="vm-number">06</div><h3>🤝 Our Community</h3><p>Schools get special nonprofit pricing. We partner with cybersecurity education programs and support digital literacy initiatives that help students stay safe online.</p></div>
+</div>
+<div style="margin-top:50px">
+<div class="section-header">
+<div class="section-badge">📈 Capabilities</div>
+<h2>Technical <span style="color:var(--accent)">Excellence</span></h2>
+</div>
+<div style="max-width:600px;margin:0 auto">
+<div class="progress-item"><div class="progress-label"><span>RFC 3986 PAC Compliance</span><span>100%</span></div><div class="progress-bar"><div class="progress-fill" data-width="100"></div></div></div>
+<div class="progress-item"><div class="progress-label"><span>Threat Detection Rate</span><span>99.7%</span></div><div class="progress-bar"><div class="progress-fill" data-width="99"></div></div></div>
+<div class="progress-item"><div class="progress-label"><span>Platform Uptime</span><span>99.9%</span></div><div class="progress-bar"><div class="progress-fill" data-width="99"></div></div></div>
+<div class="progress-item"><div class="progress-label"><span>Client Satisfaction</span><span>98%</span></div><div class="progress-bar"><div class="progress-fill" data-width="98"></div></div></div>
+<div class="progress-item"><div class="progress-label"><span>Cost Savings vs Competitors</span><span>50-80%</span></div><div class="progress-bar"><div class="progress-fill" data-width="75"></div></div></div>
+</div>
+</div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+<div class="section-header">
+<div class="section-badge">📧 Contact</div>
+<h2>Get In <span style="color:var(--accent)">Touch</span></h2>
+<p>Ready to save 50% on web filtering? Contact us today for a free demo and custom quote.</p>
+</div>
+<div class="contact-grid">
+<div class="contact-info">
+<h3>Let's Talk About Your Needs</h3>
+<p>Whether you are a school district, business or library — we have the perfect solution for you.</p>
+<div class="contact-item"><div class="contact-icon">📧</div><div><h4>Email</h4><p>frank@aerotradeglobal.com</p></div></div>
+<div class="contact-item"><div class="contact-icon">📞</div><div><h4>Phone</h4><p>+1 (703) 555-0100</p></div></div>
+<div class="contact-item"><div class="contact-icon">📍</div><div><h4>Location</h4><p>Fairfax, Virginia, USA</p></div></div>
+<div class="contact-item"><div class="contact-icon">⏰</div><div><h4>Support</h4><p>24/7 Always Available</p></div></div>
+</div>
+<div class="contact-form">
+<div id="contactAlert"></div>
+<div class="form-group"><label>Full Name *</label><input type="text" id="contactName" placeholder="John Smith"></div>
+<div class="form-group"><label>Organization *</label><input type="text" id="contactOrg" placeholder="School / Company"></div>
+<div class="form-group"><label>Email *</label><input type="email" id="contactEmail" placeholder="john@org.com"></div>
+<div class="form-group"><label>Phone</label><input type="tel" id="contactPhone" placeholder="+1 (555) 000-0000"></div>
+<div class="form-group"><label>Devices</label><select id="contactDevices"><option>1-50</option><option>51-200</option><option>201-500</option><option>500+</option></select></div>
+<div class="form-group"><label>Message</label><textarea id="contactMessage" placeholder="Tell us about your organization..."></textarea></div>
+<button class="btn-primary" style="width:100%" onclick="submitContact()">Send Message →</button>
+</div>
+</div>
+</section>
+
+<!-- PORTAL -->
+<section id="portal">
+<div class="sso-container">
+<div class="sso-card">
+<div class="sso-logo">
+<div class="sso-logo-icon">AG</div>
+<h2>Client Portal</h2>
+<p>Sign in to access your AeroShield dashboard</p>
+</div>
+<div id="portalDashboard" style="display:none">
+<div class="user-dashboard">
+<h3>🛡️ Welcome to AeroShield!</h3>
+<div class="user-info-grid">
+<div class="user-info-card"><h4>Account</h4><p id="dashUserEmail">—</p></div>
+<div class="user-info-card"><h4>Organization</h4><p id="dashUserOrg">—</p></div>
+<div class="user-info-card"><h4>Status</h4><p style="color:var(--success)">✓ Active</p></div>
+<div class="user-info-card"><h4>Plan</h4><p>Professional</p></div>
+</div>
+<div style="margin-top:20px">
+<div class="dash-bar-label"><span>Threats Blocked This Month</span><span>94%</span></div>
+<div class="dash-bar"><div class="dash-bar-fill" style="width:94%;background:linear-gradient(90deg,#ff4757,#ff6b81)"></div></div>
+<div class="dash-bar-label"><span>Devices Online</span><span>88%</span></div>
+<div class="dash-bar"><div class="dash-bar-fill" style="width:88%;background:linear-gradient(90deg,#64ffda,#0070f3)"></div></div>
+</div>
+<button class="btn-secondary" style="width:100%;margin-top:20px" onclick="portalLogout()">Sign Out</button>
+</div>
+</div>
+<div id="portalAuth">
+<div class="sso-tabs">
+<div class="sso-tab active" onclick="switchTab('login')">Sign In</div>
+<div class="sso-tab" onclick="switchTab('register')">Register</div>
+</div>
+<div class="sso-form active" id="loginForm">
+<div class="sso-providers">
+<button class="sso-provider" onclick="ssoLogin('google')"><span style="font-size:18px">🔵</span>Continue with Google</button>
+<button class="sso-provider" onclick="ssoLogin('microsoft')"><span style="font-size:18px">🟦</span>Continue with Microsoft</button>
+</div>
+<div class="sso-divider">or sign in with email</div>
+<div id="loginAlert"></div>
+<div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@organization.com"></div>
+<div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+<div style="display:flex;justify-content:space-between;margin-bottom:15px">
+<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" style="width:auto"> Remember me</label>
+<a style="font-size:12px;color:var(--accent);cursor:pointer" onclick="forgotPassword()">Forgot password?</a>
+</div>
+<button class="btn-primary" style="width:100%" onclick="portalLogin()">Sign In →</button>
+</div>
+<div class="sso-form" id="registerForm">
+<div id="registerAlert"></div>
+<div class="form-group"><label>Full Name *</label><input type="text" id="regName" placeholder="John Smith"></div>
+<div class="form-group"><label>Organization *</label><input type="text" id="regOrg" placeholder="School / Company"></div>
+<div class="form-group"><label>Email *</label><input type="email" id="regEmail" placeholder="john@org.com"></div>
+<div class="form-group"><label>Password *</label><input type="password" id="regPassword" placeholder="Min 8 characters"></div>
+<div class="form-group"><label>Confirm Password *</label><input type="password" id="regConfirm" placeholder="Repeat password"></div>
+<button class="btn-primary" style="width:100%" onclick="portalRegister()">Create Account →</button>
+<p style="text-align:center;font-size:12px;color:var(--text2);margin-top:15px">Already have an account? <a style="color:var(--accent);cursor:pointer" onclick="switchTab('login')">Sign in</a></p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+<div class="footer-grid">
+<div class="footer-brand">
+<div class="logo" style="margin-bottom:10px">
+<div class="logo-icon" style="width:38px;height:38px;font-size:16px">AG</div>
+<div class="logo-text" style="font-size:17px">Aerotrade<span>Global</span></div>
+</div>
+<p>Enterprise-grade web filtering powered by Cloudflare Gateway and WebTitan DNS. RFC compliant, works on all devices, 50% cheaper than Lightspeed.</p>
+</div>
+<div class="footer-col">
+<h4>Product</h4>
+<ul>
+<li><a onclick="showSection('services')">AeroShield</a></li>
+<li><a onclick="showSection('services')">PAC Filtering</a></li>
+<li><a onclick="showSection('services')">DNS Security</a></li>
+<li><a onclick="showSection('pricing')">Pricing</a></li>
+</ul>
+</div>
+<div class="footer-col">
+<h4>Company</h4>
+<ul>
+<li><a onclick="showSection('about')">About Us</a></li>
+<li><a onclick="showSection('vision')">Vision & Mission</a></li>
+<li><a onclick="showSection('about')">Team</a></li>
+<li><a onclick="showSection('contact')">Contact</a></li>
+</ul>
+</div>
+<div class="footer-col">
+<h4>Support</h4>
+<ul>
+<li><a onclick="showSection('portal')">Client Portal</a></li>
+<li><a onclick="openModal()">Request Demo</a></li>
+<li><a onclick="showSection('contact')">Get Quote</a></li>
+</ul>
+</div>
+</div>
+<div class="footer-bottom">
+<p>© 2026 <span>Aerotrade Global</span>. All rights reserved. Founded by <span>Frank Kidelo</span>.</p>
+<p>🛡️ Powered by <span>Cloudflare</span> & <span>WebTitan</span> · RFC 3986 Compliant</p>
+</div>
+</footer>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBV68JpoEfgKRBGzZrKzMORUSjy87D_JlI",
+  authDomain: "cal-ai-7f7f6.firebaseapp.com",
+  projectId: "cal-ai-7f7f6",
+  storageBucket: "cal-ai-7f7f6.firebasestorage.app",
+  messagingSenderId: "224004102153",
+  appId: "1:224004102153:web:b8e0d16c99cdcd124b80d8"
+};
+
+const EMAILJS_PUBLIC_KEY = "ys3t14rg-fBcBigiP";
+const EMAILJS_GMAIL_SERVICE = "service_lvwh0ia";
+const EMAILJS_OUTLOOK_SERVICE = "service_a06q21h";
+const EMAILJS_TEMPLATE_WELCOME = "template_welcome";
+const EMAILJS_TEMPLATE_DEMO = "template_demo";
+const EMAILJS_TEMPLATE_CONTACT = "template_contact";
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+emailjs.init("ys3t14rg-fBcBigiP");
+
+function showSection(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'vision') animateProgress();
+  if (id === 'home') animateStats();
+}
+
+function toggleMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('mobileMenu');
+  const hamburger = document.querySelector('.hamburger');
+  if (menu && hamburger && !menu.contains(e.target) && !hamburger.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
+function openModal() {
+  document.getElementById('demoModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('demoModal').classList.remove('show');
+  clearAlert('demoAlert');
+}
+
+document.getElementById('demoModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'alert ' + type;
+  el.innerHTML = msg;
+  el.style.display = 'block';
+}
+
+function clearAlert(id) {
+  const el = document.getElementById(id);
+  if (el) { el.innerHTML = ''; el.style.display = 'none'; }
+}
+
+function sendWelcomeEmail(toEmail, toName, orgName) {
+  return emailjs.send(EMAILJS_GMAIL_SERVICE, EMAILJS_TEMPLATE_WELCOME, {
+    to_email: toEmail,
+    to_name: toName,
+    org_name: orgName,
+    login_url: window.location.href,
+    from_name: 'Frank Kidelo - Aerotrade Global'
+  }).catch(() => emailjs.send(EMAILJS_OUTLOOK_SERVICE, EMAILJS_TEMPLATE_WELCOME, {
+    to_email: toEmail,
+    to_name: toName,
+    org_name: orgName,
+    login_url: window.location.href,
+    from_name: 'Frank Kidelo - Aerotrade Global'
+  }));
+}
+
+async function submitDemo() {
+  const name = document.getElementById('demoName').value.trim();
+  const org = document.getElementById('demoOrg').value.trim();
+  const email = document.getElementById('demoEmail').value.trim();
+  const devices = document.getElementById('demoDevices').value;
+
+  if (!name || !org || !email) {
+    showAlert('demoAlert', 'error', '❌ Please fill in all required fields.');
+    return;
+  }
+  if (!email.includes('@')) {
+    showAlert('demoAlert', 'error', '❌ Please enter a valid email address.');
+    return;
+  }
+
+  showAlert('demoAlert', 'success', '⏳ Sending your request...');
+
+  try {
+    await db.collection('demo_requests').add({
+      name: name,
+      org: org,
+      email: email,
+      devices: devices,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'pending'
+    });
+    console.log('✅ Demo saved to Firestore');
+  } catch (err) {
+    console.error('Firestore error:', err.message);
+    showAlert('demoAlert', 'error', '❌ Database error: ' + err.message);
+    return;
+  }
+
+  try {
+    await emailjs.send(EMAILJS_GMAIL_SERVICE, EMAILJS_TEMPLATE_DEMO, {
+      to_email: email,
+      to_name: name,
+      org_name: org,
+      devices: devices,
+      from_name: 'Frank Kidelo - Aerotrade Global'
+    });
+    console.log('✅ Demo email sent');
+    showAlert('demoAlert', 'success', '✅ Demo request sent! Check your email inbox for confirmation. We will contact you within 24 hours.');
+    document.getElementById('demoName').value = '';
+    document.getElementById('demoOrg').value = '';
+    document.getElementById('demoEmail').value = '';
+    setTimeout(() => closeModal(), 4000);
+  } catch (err) {
+    console.error('EmailJS error:', JSON.stringify(err));
+    showAlert('demoAlert', 'error', '❌ Saved but email failed. Error: ' + JSON.stringify(err));
+  }
+}
+
+async function submitContact() {
+  const name = document.getElementById('contactName').value.trim();
+  const org = document.getElementById('contactOrg').value.trim();
+  const email = document.getElementById('contactEmail').value.trim();
+  const phone = document.getElementById('contactPhone').value.trim();
+  const devices = document.getElementById('contactDevices').value;
+  const message = document.getElementById('contactMessage').value.trim();
+
+  if (!name || !org || !email) {
+    showAlert('contactAlert', 'error', '❌ Please fill in all required fields.');
+    return;
+  }
+  if (!email.includes('@')) {
+    showAlert('contactAlert', 'error', '❌ Please enter a valid email address.');
+    return;
+  }
+
+  showAlert('contactAlert', 'success', '⏳ Sending your message...');
+
+  try {
+    await db.collection('contact_requests').add({
+      name: name,
+      org: org,
+      email: email,
+      phone: phone,
+      devices: devices,
+      message: message,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'new'
+    });
+    console.log('✅ Contact saved to Firestore');
+  } catch (err) {
+    console.error('Firestore error:', err.message);
+    showAlert('contactAlert', 'error', '❌ Database error: ' + err.message);
+    return;
+  }
+
+  try {
+    await emailjs.send(EMAILJS_GMAIL_SERVICE, EMAILJS_TEMPLATE_CONTACT, {
+      to_email: email,
+      to_name: name,
+      org_name: org,
+      message: message,
+      from_name: 'Frank Kidelo - Aerotrade Global'
+    });
+    console.log('✅ Contact email sent');
+    showAlert('contactAlert', 'success', '✅ Message sent! Check your email for confirmation. Frank will reply within 24 hours.');
+    document.getElementById('contactName').value = '';
+    document.getElementById('contactOrg').value = '';
+    document.getElementById('contactEmail').value = '';
+    document.getElementById('contactPhone').value = '';
+    document.getElementById('contactMessage').value = '';
+  } catch (err) {
+    console.error('EmailJS error:', JSON.stringify(err));
+    showAlert('contactAlert', 'error', '❌ Saved but email failed. Error: ' + JSON.stringify(err));
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.sso-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sso-form').forEach(f => f.classList.remove('active'));
+  if (tab === 'login') {
+    document.querySelectorAll('.sso-tab')[0].classList.add('active');
+    document.getElementById('loginForm').classList.add('active');
+  } else {
+    document.querySelectorAll('.sso-tab')[1].classList.add('active');
+    document.getElementById('registerForm').classList.add('active');
+  }
+}
+
+let ssoInProgress = false;
+
+async function ssoLogin(provider) {
+  if (ssoInProgress) return;
+  ssoInProgress = true;
+  try {
+    showAlert('loginAlert', 'success', '⏳ Connecting to ' + provider + '...');
+    let authProvider;
+    if (provider === 'google') {
+      authProvider = new firebase.auth.GoogleAuthProvider();
+    } else if (provider === 'microsoft') {
+      authProvider = new firebase.auth.OAuthProvider('microsoft.com');
+    }
+    const result = await auth.signInWithPopup(authProvider);
+    const user = result.user;
+    const isNew = result.additionalUserInfo ? result.additionalUserInfo.isNewUser : true;
+    if (isNew) {
+      await db.collection('users').doc(user.uid).set({
+        name: user.displayName || 'Client',
+        email: user.email,
+        org: 'Not specified',
+        plan: 'Professional',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        provider: provider
+      });
+      await sendWelcomeEmail(user.email, user.displayName || 'Client', 'Not specified');
+    }
+    showDashboard(user);
+  } catch (err) {
+    if (err.code !== 'auth/cancelled-popup-request') {
+      showAlert('loginAlert', 'error', '❌ ' + err.message);
+    }
+  } finally {
+    ssoInProgress = false;
+  }
+}
+
+async function portalLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value.trim();
+  if (!email || !pass) {
+    showAlert('loginAlert', 'error', '❌ Please enter your email and password.');
+    return;
+  }
+  showAlert('loginAlert', 'success', '⏳ Signing in...');
+  try {
+    const result = await auth.signInWithEmailAndPassword(email, pass);
+    showDashboard(result.user);
+  } catch (err) {
+    let msg = '❌ Login failed. Please check your credentials.';
+    if (err.code === 'auth/user-not-found') msg = '❌ No account found with this email.';
+    if (err.code === 'auth/wrong-password') msg = '❌ Incorrect password.';
+    if (err.code === 'auth/too-many-requests') msg = '❌ Too many attempts. Try again later.';
+    showAlert('loginAlert', 'error', msg);
+  }
+}
+
+async function portalRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const org = document.getElementById('regOrg').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value.trim();
+  const confirm = document.getElementById('regConfirm').value.trim();
+
+  if (!name || !org || !email || !pass || !confirm) {
+    showAlert('registerAlert', 'error', '❌ Please fill in all required fields.');
+    return;
+  }
+  if (!email.includes('@')) {
+    showAlert('registerAlert', 'error', '❌ Please enter a valid email address.');
+    return;
+  }
+  if (pass.length < 8) {
+    showAlert('registerAlert', 'error', '❌ Password must be at least 8 characters.');
+    return;
+  }
+  if (pass !== confirm) {
+    showAlert('registerAlert', 'error', '❌ Passwords do not match.');
+    return;
+  }
+
+  showAlert('registerAlert', 'success', '⏳ Creating your account...');
+
+  try {
+    const result = await auth.createUserWithEmailAndPassword(email, pass);
+    const user = result.user;
+    await user.updateProfile({ displayName: name });
+    await user.sendEmailVerification();
+    await db.collection('users').doc(user.uid).set({
+      name: name,
+      email: email,
+      org: org,
+      plan: 'Starter',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      verified: false,
+      provider: 'email'
+    });
+    await sendWelcomeEmail(email, name, org);
+    showAlert('registerAlert', 'success',
+      '✅ Account created! Verification email sent to <strong>' + email + '</strong>. Check your inbox!');
+    document.getElementById('regName').value = '';
+    document.getElementById('regOrg').value = '';
+    document.getElementById('regEmail').value = '';
+    document.getElementById('regPassword').value = '';
+    document.getElementById('regConfirm').value = '';
+    setTimeout(() => switchTab('login'), 5000);
+  } catch (err) {
+    let msg = '❌ Registration failed. Please try again.';
+    if (err.code === 'auth/email-already-in-use') msg = '❌ Account with this email already exists.';
+    if (err.code === 'auth/weak-password') msg = '❌ Password too weak. Use at least 8 characters.';
+    if (err.code === 'auth/invalid-email') msg = '❌ Invalid email address.';
+    showAlert('registerAlert', 'error', msg);
+  }
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) {
+    showAlert('loginAlert', 'error', '❌ Please enter your email address first.');
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showAlert('loginAlert', 'success', '✅ Password reset email sent to ' + email + '. Check your inbox!');
+  } catch (err) {
+    showAlert('loginAlert', 'error', '❌ Could not send reset email. Check your email address.');
+  }
+}
+
+async function showDashboard(user) {
+  try {
+    const doc = await db.collection('users').doc(user.uid).get();
+    const userData = doc.exists ? doc.data() : {};
+    document.getElementById('dashUserEmail').textContent = user.email || '—';
+    document.getElementById('dashUserOrg').textContent = userData.org || 'Not specified';
+    document.getElementById('portalAuth').style.display = 'none';
+    document.getElementById('portalDashboard').style.display = 'block';
+  } catch (err) {
+    document.getElementById('dashUserEmail').textContent = user.email || '—';
+    document.getElementById('portalAuth').style.display = 'none';
+    document.getElementById('portalDashboard').style.display = 'block';
+  }
+}
+
+async function portalLogout() {
+  await auth.signOut();
+  document.getElementById('portalAuth').style.display = 'block';
+  document.getElementById('portalDashboard').style.display = 'none';
+  switchTab('login');
+  clearAlert('loginAlert');
+}
+
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    showDashboard(user);
+  } else {
+    document.getElementById('portalAuth').style.display = 'block';
+    document.getElementById('portalDashboard').style.display = 'none';
+  }
+});
+
+function animateStats() {
+  const targets = [
+    { id: 'stat1', end: 50000, suffix: '+' },
+    { id: 'stat2', end: 10000, suffix: '+' },
+    { id: 'stat3', end: 99, suffix: '.9%' },
+    { id: 'stat4', end: 150, suffix: '+' }
+  ];
+  targets.forEach(t => {
+    const el = document.getElementById(t.id);
+    if (!el) return;
+    let start = 0;
+    const step = t.end / (2000 / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= t.end) { start = t.end; clearInterval(timer); }
+      el.textContent = Math.floor(start).toLocaleString() + t.suffix;
+    }, 16);
+  });
+}
+
+function animateProgress() {
+  setTimeout(() => {
+    document.querySelectorAll('.progress-fill').forEach(bar => {
+      const w = bar.getAttribute('data-width');
+      if (w) bar.style.width = w + '%';
+    });
+  }, 200);
+}
+
+function updateDashboard() {
+  const blocked = document.getElementById('liveBlocked');
+  const threats = document.getElementById('liveThreats');
+  if (blocked) {
+    let current = parseInt(blocked.textContent.replace(/,/g, ''));
+    current += Math.floor(Math.random() * 5) + 1;
+    blocked.textContent = current.toLocaleString();
+  }
+  if (threats) {
+    threats.textContent = Math.floor(Math.random() * 30) + 10;
+  }
+}
+
+const threatMessages = [
+  { title: '🛡️ Malware Blocked!', msg: 'trojan-download.net blocked' },
+  { title: '🚨 Phishing Blocked!', msg: 'fake-bank-login.com blocked' },
+  { title: '🔒 Content Blocked!', msg: 'Adult category rule applied' },
+  { title: '⚡ Threat Blocked!', msg: 'Malicious domain intercepted' },
+  { title: '🛡️ Spyware Blocked!', msg: 'spyware-tracker.net blocked' }
+];
+
+function showRandomNotification() {
+  const notif = document.getElementById('notification');
+  const r = threatMessages[Math.floor(Math.random() * threatMessages.length)];
+  notif.querySelector('h4').textContent = r.title;
+  notif.querySelector('p').textContent = r.msg;
+  notif.classList.add('show');
+  setTimeout(() => notif.classList.remove('show'), 4000);
+}
+
+window.addEventListener('load', function() {
+  animateStats();
+  setInterval(updateDashboard, 3000);
+  setTimeout(() => {
+    showRandomNotification();
+    setInterval(showRandomNotification, 8000);
+  }, 3000);
+});
+</script>
+</body>
+</html>
