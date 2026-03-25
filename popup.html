@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body {
+  width: 300px;
+  background: #0a0a1a;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  padding: 15px;
+}
+h2 {
+  color: #00d4ff;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+.status-box {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid #0f3460;
+}
+.status-row:last-child {
+  border-bottom: none;
+}
+.label { color: #888; }
+.value { color: #00d4ff; }
+.online { color: #00ff88; }
+input {
+  width: 100%;
+  padding: 8px;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+button {
+  width: 100%;
+  padding: 8px;
+  background: #0066cc;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+button:hover {
+  background: #0088ff;
+}
+.footer {
+  color: #444;
+  font-size: 10px;
+  text-align: center;
+  margin-top: 10px;
+}
+.protected {
+  color: #00ff88;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+<h2>🛡️ AeroShield Agent</h2>
+
+<div class="status-box">
+  <div class="status-row">
+    <span class="label">Status</span>
+    <span class="value online">
+      ● PROTECTED
+    </span>
+  </div>
+  <div class="status-row">
+    <span class="label">Device ID</span>
+    <span class="value" id="deviceID">
+      Loading...
+    </span>
+  </div>
+  <div class="status-row">
+    <span class="label">Student ID</span>
+    <span class="value" id="studentID">
+      Not set
+    </span>
+  </div>
+  <div class="status-row">
+    <span class="label">Rules Loaded</span>
+    <span class="value" id="rulesCount">
+      0
+    </span>
+  </div>
+  <div class="status-row">
+    <span class="label">Server</span>
+    <span class="value" id="serverHost">
+      frank-vapdeq.fly.dev
+    </span>
+  </div>
+</div>
+
+<input type="text"
+  id="studentInput"
+  placeholder="Enter Student ID">
+<button onclick="setStudent()">
+  Set Student ID
+</button>
+
+<div class="footer">
+  AeroTrade Global Network Protection
+</div>
+
+<script>
+chrome.runtime.sendMessage(
+  {type: "get_status"},
+  function(response) {
+    if (response) {
+      document.getElementById('deviceID')
+        .textContent =
+        response.deviceID || "Unknown";
+      document.getElementById('studentID')
+        .textContent =
+        response.studentID || "Not set";
+      document.getElementById('rulesCount')
+        .textContent =
+        response.rulesLoaded + " domains";
+      document.getElementById('serverHost')
+        .textContent =
+        response.server
+          .replace("https://", "");
+    }
+  }
+);
+
+function setStudent() {
+  var id = document
+    .getElementById('studentInput')
+    .value.trim();
+  if (!id) {
+    alert("Enter a student ID!");
+    return;
+  }
+  chrome.runtime.sendMessage(
+    {type: "set_student", studentID: id},
+    function(response) {
+      document.getElementById('studentID')
+        .textContent = id;
+      document.getElementById('studentInput')
+        .value = "";
+      alert("Student ID set: " + id);
+    }
+  );
+}
+</script>
+</body>
+</html>
+
