@@ -19,6 +19,4 @@ EXPOSE 53/tcp
 EXPOSE 8443
 
 CMD ["./aeroshield"]
-FROM pierrezemb/gostatic
-COPY . /srv/http/
-CMD ["-port","8080","-https-promote", "-enable-logging"]
+
